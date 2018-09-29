@@ -11,4 +11,6 @@ public abstract class Encryptor {
 	public abstract byte[] decrypt(byte[] in) throws QCError;
 	
 	public abstract String base64Id(); //unique two base64 char Identifier
+	public abstract String shortName(); //name
+	public abstract String description();
 }

@@ -91,10 +91,26 @@ public class CJK4096 extends BinaryEncoder {
 	public String fullName() {
 		return "Chinese/Jappenese/Korean Base 4096 Unicode BMP";
 	}
-
+	
+	@Override
+	public String shortName() {
+		return "CJK 4096";
+	}
+	
 	@Override
 	public char base64Id() {
 		return 'C';
+	}
+	
+	public String description()
+	{
+		return "This Encoder uses the 0x3400-0x440F UNICODE characters from the \"CJK Unified Ideographs Extension A\" "
+                +"section of the BMP as its character set. (There are 4112 characters not 4096, because of some technicalities in calculating the length while decoding). "
+                +"Without encryption or compression, This encoder makes text that is approximately 1.333 times the input text + 16 characters for the header and footer. "
+                +"This only uses characters from the BMP so it will work in environments that only allow BMP UNICODE as well as any other type of UNICODE environment. "
+                +"An ASCII only environment will not allow output from this encoder because ASCII does not support any of it's Chinese/Japanese/Korean symbols."
+                +"\n\nDisclaimer: Because Chinese/Japanese/Korean symbols are used, text may contain a recognizable plain message. "
+				+"This is not the intent of the program or the programmer.";
 	}
 
 }

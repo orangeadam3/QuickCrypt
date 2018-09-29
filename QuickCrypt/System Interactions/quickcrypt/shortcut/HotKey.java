@@ -8,9 +8,6 @@ import quickcrypt.core.QCError;
 
 /**
  * Listens for a hotkey before triggering Action
- * <p>
- * can only have one on the whole machine
- * Also one of the only Quick Crypt classes to reference external libraries
  * 
  * @author Adam Spiegel
  */
@@ -21,6 +18,8 @@ public class HotKey implements ActionReturn{
 	private HotKey This;
 	private int key;
 	
+	HotkeyListener jintlist;
+	
 	/**
 	 * Creates a HotKey object
 	 * 
@@ -30,12 +29,6 @@ public class HotKey implements ActionReturn{
 	 */
 	public HotKey(Action act, int key) throws QCError
 	{
-		try {
-		    JUnique.acquireLock("QuickCrypt");
-		  } catch (AlreadyLockedException alreadyLockedException) {
-		   throw new QCError("Instance of Quick Crypt Already Running!!");
-		  }
-		
 		 action = act;
 		 This = this;
 		 this.key = key;
@@ -54,14 +47,24 @@ public class HotKey implements ActionReturn{
 	{
 		
 	    JIntellitype.getInstance().registerHotKey(6969, JIntellitype.MOD_CONTROL, key);
-	    JIntellitype.getInstance().addHotKeyListener(new HotkeyListener() {
-	   
-	    //If my hotkey is detected then trigger action
-	    @Override
-	    public void onHotKey(int cut) {
-	           if (cut == 6969)
-	            action.goDo(This); //call action with this object as the caller
-	    }});
+	    jintlist = new HotkeyListener() {
+	 	   
+		    //If my hotkey is detected then trigger action
+		    @Override
+		    public void onHotKey(int cut) {
+		           if (cut == 6969)
+		            action.goDo(This); //call action with this object as the caller
+		    }};
+	    JIntellitype.getInstance().addHotKeyListener(jintlist);
+	}
+	
+	/**
+	 * Stops listener
+	 */
+	public void stop()
+	{
+		JIntellitype.getInstance().unregisterHotKey(6969);
+		JIntellitype.getInstance().removeHotKeyListener(jintlist);
 	}
 
 	/**

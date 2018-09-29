@@ -16,7 +16,7 @@ public class Base64URL extends BinaryEncoder {
 	{
 		StringBuilder out = new StringBuilder();
 		
-		//cycle evrey 6 bits and add corresponding character
+		//cycle every 6 bits and add corresponding character
 		for(int x=0;x<in.length*8;x+=6)
 			out.append(toChar((int)getBits(in, x, x+6<=in.length*8?6:in.length*8-x)));
 		
@@ -85,8 +85,23 @@ public class Base64URL extends BinaryEncoder {
 	public String fullName() {
 		return "URL safe standard base-64";
 	}
+	
+	@Override
+	public String shortName() {
+		return "URL 64";
+	}
 
 	public char base64Id() {
 		return 'U';
+	}
+	
+	public String description()
+	{
+		return "Base 64 uses a character set made up of all lowercase and capital English letters"
+                +" as well as the '-' (dash or minus) and '_' (underscore), Totaling 64 characters. "
+                +"Without encryption or compression, This Encoder makes text that is approximately 2.667 times the input text + 16 characters for the header and footer. "
+                +"Base 64 is useful because it only outputs ASCII code and can be used on normal UNICODE accepting environments but, also those only accept ASCII. "
+                +"Because of this, Base 64 along with the No Encryption option could be used to store UNICODE data in non-UNICODE Environments"
+                +"\n\nDisclaimer: Because English letters are used, text may contain a recognizable plain message. This is not the intent of the program or the programmer.";
 	}
 }

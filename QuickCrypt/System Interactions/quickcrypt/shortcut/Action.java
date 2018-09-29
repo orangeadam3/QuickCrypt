@@ -2,21 +2,21 @@ package quickcrypt.shortcut;
 import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+import it.sauronsoftware.junique.AlreadyLockedException;
+import it.sauronsoftware.junique.JUnique;
 import quickcrypt.core.Context;
 import quickcrypt.core.QCError;
 
 /**
- * Handles multithreaded access to ClipboardCoder and clipboard and allows
- * ClipboardCoder.code() to be called without waiting for it to complete.
+ * seprate thread that allows ClipboardCoder.code() to be called without waiting for it to complete.
+ * <p>
+ * Can only have one instance on the whole machine
  * 
- * @author Adam
+ * @author Adam Spiegel
  */
 
 public class Action extends Thread {
-	private volatile Lock mainLock; //lock on the context
 	private volatile Context context; //Context object linked to this
 	private volatile ClipboardCoder clippy; //ClipboardCoder object linked to this
 	private volatile boolean isDoing; //Is an action being performed
@@ -28,37 +28,22 @@ public class Action extends Thread {
 	 * 
 	 * @param clipboard
 	 *            ClipboardCoder to be used
+	 * @throws QCError 
 	 */
-	public Action(ClipboardCoder clipboard) {
+	public Action(ClipboardCoder clipboard) throws QCError {
+		
+		try {
+		    JUnique.acquireLock("QuickCrypt");
+		  } catch (AlreadyLockedException alreadyLockedException) {
+		   throw new QCError("Instance of Quick Crypt Already Running!!");
+		  }
 		
 		clippy = clipboard;
 		context = clippy.context;
 
 		isDoing = false;
-		mainLock = new ReentrantLock();
 
 		start();
-	}
-
-	/**
-	 * Lock the Context and ClipboardCoder
-	 */
-	public synchronized void lock() {
-		mainLock.lock();
-	}
-
-	/**
-	 * Try to Lock the Context and ClipboardCoder
-	 */
-	public synchronized void tryLock() {
-		mainLock.tryLock();
-	}
-
-	/**
-	 * Unlock the Context and ClipboardCoder
-	 */
-	public synchronized void unlock() {
-		mainLock.unlock();
 	}
 
 	/**
@@ -110,12 +95,12 @@ public class Action extends Thread {
 
 			//do it
 			if (isDoing) {
-				lock(); //lock context and ClipboardCoder
+				context.lock(); //lock context
 				doClippyfunc();
-				unlock();
+				context.unlock();
 				isDoing = false; //reset
 
-				//report that the actin has been completed
+				//report that the action has been completed
 				if (returnie != null)
 					returnie.actionDone();
 			}
@@ -127,6 +112,7 @@ public class Action extends Thread {
 	 * from the open program
 	 */
 	private void doClippyfunc() {
+		
 		Robot robot;
 		try {
 			robot = new Robot();
@@ -162,7 +148,7 @@ public class Action extends Thread {
 		robot.keyRelease(KeyEvent.VK_CONTROL);
 		robot.delay(100); // wait for program to relinquish clipboard
 
-		//clippy.pop();
+		clippy.pop();
 	}
 }
 

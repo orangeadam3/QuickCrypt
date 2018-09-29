@@ -16,7 +16,9 @@ public abstract class BinaryEncoder {
 	public abstract byte[] from(String in); //convert encoding to bytes
 	
 	public abstract String fullName(); //returns full name of the encoder
+	public abstract String shortName(); //returns short name of the encoder
 	public abstract char base64Id(); //returns a single unique char 0-9, A-Z, a-z, -, or _, that can be used to identify this encoder
+	public abstract String description(); //Moderately sized description of the encoder and it's properties
 	
 	/**
 	 * converts a signed byte to an unsigned value
@@ -109,5 +111,12 @@ public abstract class BinaryEncoder {
 					(byte) ((in%(1<<((bit+num)%8)) << (8 - (bit+num)%8)) 
 							+ (byteToUnsignedInt(bytes[(int) ((bit+num)/8)])%(1<<(8 - (bit+num)%8))));
 		}
+	}
+	
+	public static String standardDescription()
+	{
+		return "An Encoder is what makes encrypted data legible as text. The encoder will effect the size of the output text inserted back into the program. "
+                +"It will also effect which text formats (ASCII, UNICODE, ect.) can read the text. An Encoder is made up of a character set which define what characters "
+                +"can possibly be outputted by a given encoder.";
 	}
 }

@@ -65,8 +65,22 @@ public class Hexadecimal extends BinaryEncoder {
 	public String fullName() {
 		return "Hexadecimal (Base 16)";
 	}
+	
+	public String shortName() {
+		return "Hex 16";
+	}
 
 	public char base64Id() {
 		return 'X';
+	}
+	
+	public String description()
+	{
+		return "Base 16 or Hexadecimal uses a character set made up of digits 0-9 as well as A-F "
+                +"Without encryption or compression, This Encoder makes text that is approximately 4 times the input text + 16 characters for the header and footer. "
+                +"Hexadecimal is useful because it only outputs ASCII code so can be used on normal UNICODE accepting environments but, also those only accept ASCII. "
+                +"Hexadecimal could even, theoretically, be used in an environment that only takes uppercase letters or only takes lowercase letters. "
+                +"(The header and footer would have to be stored elsewhere)."
+                +"\n\nDisclaimer: Because English letters are used, text may contain a recognizable plain message. This is not the intent of the program or the programmer.";
 	}
 }

@@ -9,6 +9,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.DataFormatException;
 
 /**
@@ -27,6 +29,8 @@ public class Context {
 	public static String backHead = ":E" + "`~>";
 
 	public Hexadecimal hex;
+	
+	private Lock lock;
 
 	private BinaryEncoder[] binaryEncoders;
 	private Map<String, Encryptor> encryptors;
@@ -36,8 +40,8 @@ public class Context {
 	private char compression;
 	private int flags1;
 	private int flags2;
-	private boolean ImgtoText;
-	private boolean TexttoImg;
+	public boolean ImgtoText; //TODO getter/setter
+	public boolean TexttoImg;
 
 	private int imageEncodingBlockSize = 1;
 
@@ -59,6 +63,8 @@ public class Context {
 
 		encryptors = new HashMap<String, Encryptor>();
 		binaryEncoders = new BinaryEncoder[64];
+		
+		lock = new ReentrantLock();
 	}
 
 	/**
@@ -82,6 +88,8 @@ public class Context {
 
 		encryptors = a.encryptors;
 		binaryEncoders = a.binaryEncoders;
+		
+		lock = new ReentrantLock();
 	}
 
 	/**
@@ -236,6 +244,15 @@ public class Context {
 		if (f < 64)
 			flags1 ^= f;
 	}
+	
+	/**
+	 * gets the true false value of a flag
+	 * @param f flag to get
+	 * @return if flag is off or on
+	 */
+	public boolean isFlag1(int f) {
+		return (flags1 & f) != 0;
+	}
 
 	/**
 	 * Enables a given flag
@@ -257,6 +274,15 @@ public class Context {
 	public void toggleFlag2(int f) {
 		if (f < 64)
 			flags2 ^= f;
+	}
+	
+	/**
+	 * gets the true false value of a flag
+	 * @param f flag to get
+	 * @return if flag is off or on
+	 */
+	public boolean isFlag2(int f) {
+		return (flags1 & f) != 0;
 	}
 
 	/**
@@ -761,5 +787,67 @@ public class Context {
 	 */
 	public Encryptor getEncryptor(String label) {
 		return encryptors.get(label);
+	}
+	
+	/**
+	 * Get a registered binary encoder by base64id
+	 * 
+	 * @param id base64id of encoder
+	 * @return encoder
+	 * @throws QCError if id doesn't match any binary encoders
+	 */
+	public BinaryEncoder getBinaryEncoder(char id) throws QCError {
+		int v = Base64URL.fromChar(id);
+		if(v==-1||binaryEncoders[v]==null)throw new QCError("Unknown encoder Base 64 Id");
+		return binaryEncoders[v];
+	}
+	
+	/**
+	 * Get map of binary encoders
+	 * @return map of binary encoders
+	 */
+	public Map<Character,BinaryEncoder> getBinaryEncoderMap()
+	{
+		Map<Character,BinaryEncoder> out = new HashMap<Character,BinaryEncoder>();
+		for(int x=0;x<64;x++)
+		{
+			if(binaryEncoders[x]!=null)out.put(Base64URL.toChar(x), binaryEncoders[x]);
+		}
+		return out;
+	}
+	
+	/**
+	 * Get map of encryptors
+	 * @return map of encryptors
+	 */
+	public Map<String, Encryptor> getEncryptorMap()
+	{
+		return encryptors;
+	}
+	
+	public char getEncoding()
+	{
+		return encoding;
+	}
+	
+	public String getEncryptior()
+	{
+		return encryption;
+	}
+	
+	/**
+	 * Locks built in lock
+	 */
+	public void lock()
+	{
+		lock.lock();
+	}
+	
+	/**
+	 * Unlocks built in lock
+	 */
+	public void unlock()
+	{
+		lock.unlock();
 	}
 }

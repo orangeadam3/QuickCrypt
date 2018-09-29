@@ -82,7 +82,7 @@ public class SharedSecrets extends Encryptor {
 	
 	/**
 	 * @param label of secret to get
-	 * @return secret of null if it doesn't exist
+	 * @return secret or null if it doesn't exist
 	 */
 	public Secret getSecret(String label)
 	{
@@ -92,5 +92,22 @@ public class SharedSecrets extends Encryptor {
 	@Override
 	public String base64Id() {
 		return "SS";
+	}
+
+	@Override
+	public String shortName() {
+		return "Shared Secret";
+	}
+
+	@Override
+	public String description() {
+		return "Uses up to 512-bit symetric encryption algorithms to encrypt in such a way that, "
+				+"the sender and reciver must know the same \"secret\" in order to transfer the message. "
+				+"Any would be spys are unable to read an intercepted message without knowing te secret.\n"
+				+"The secret takes the form of a Label and a Key. "
+				+"The label cannot be shared by any other secret on this instance of QuickCrypt. "
+				+"The label can be seen by people without the secret so do not use personal information or passwords for the label. "
+				+"The key is generated from a password and should be the same password between both the sender and reciver. "
+				+"In order properly share a secret, both the password and the key should be the same.";
 	}
 }
