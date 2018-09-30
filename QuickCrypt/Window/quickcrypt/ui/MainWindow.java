@@ -13,6 +13,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
+
+import java.util.HashMap;
 import java.util.Map;
 import java.awt.Font;
 import java.awt.event.ActionListener;
@@ -37,6 +39,8 @@ public class MainWindow {
 	private HotKey hotkey;
 	
 	private Map<Character, BinaryEncoder> encoders;
+	
+	private Map<String,EncryptorSettings> encryptorsettings;
 	
 	/**
 	 * Launch the application.
@@ -78,11 +82,19 @@ public class MainWindow {
 			action = new Action(clippy);
 			hotkey = null;
 			
+			encryptorsettings = new HashMap<String,EncryptorSettings>();
+			
+			addEncryptorSettings(new SharedSecretSettings(sharedsecrets,context));
+			
 		} catch (QCError e) {
 			System.err.println("Error: "+e);
 			return;
 		}
 		initialize();
+	}
+
+	public void addEncryptorSettings(EncryptorSettings es) {
+		encryptorsettings.put(es.base64Id(), es);
 	}
 
 	/**
@@ -198,7 +210,17 @@ public class MainWindow {
 		JButton btnSettings = new JButton("Settings");
 		btnSettings.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//TODO: Launch Encryptor Settings
+				
+				context.lock();
+				String enc = context.getEncryptior();
+				context.unlock();
+				
+				if(enc=="NO")
+					JOptionPane.showMessageDialog(null, "No encryption, all messages sent with this mode can be decoded by anyone", enc, JOptionPane.INFORMATION_MESSAGE);
+				else
+				{
+					encryptorsettings.get(enc).start(frame);
+				}
 			}
 		});
 		btnSettings.setBounds(150, 45, 89, 23);
@@ -278,7 +300,7 @@ public class MainWindow {
 				context.unlock();
 			}
 		});
-		chckbxNewCheckBox_1.setBounds(10, 137, 138, 23);
+		chckbxNewCheckBox_1.setBounds(10, 137, 212, 23);
 		panel.add(chckbxNewCheckBox_1);
 		
 		JCheckBox chckbxEnableCompression = new JCheckBox("Enable Compression");
@@ -293,7 +315,7 @@ public class MainWindow {
 				context.unlock();
 			}
 		});
-		chckbxEnableCompression.setBounds(10, 111, 138, 23);
+		chckbxEnableCompression.setBounds(10, 111, 212, 23);
 		panel.add(chckbxEnableCompression);
 	}
 }

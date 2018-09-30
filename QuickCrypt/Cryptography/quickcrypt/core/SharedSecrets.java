@@ -88,6 +88,14 @@ public class SharedSecrets extends Encryptor {
 	{
 		return allSecrets.get(label);
 	}
+	
+	/**
+	 * @return selected secret
+	 */
+	public Secret getSelectedSecret()
+	{
+		return currentSecret;
+	}
 
 	@Override
 	public String base64Id() {
