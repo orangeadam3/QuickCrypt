@@ -16,6 +16,7 @@ import javax.swing.DefaultComboBoxModel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -26,6 +27,11 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import javax.swing.JCheckBox;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.awt.event.ItemEvent;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollBar;
@@ -34,6 +40,9 @@ import javax.swing.JTextArea;
 import java.awt.Scrollbar;
 
 public class MainWindow {
+
+	public String settingsFile = "Quick Crypt Settings.ini";
+	public boolean saveOnExit = true;
 
 	private JFrame frame;
 	
@@ -84,6 +93,12 @@ public class MainWindow {
 			context.setEncoding('X');
 			context.setFlag1(1);
 			
+			try {
+				context.load(new Scanner(new File(settingsFile)));
+			} catch (Exception e) {
+				System.err.println("Settings were invalid or non existant");
+			}
+			
 			encoders = context.getBinaryEncoderMap();
 			
 			clippy = new ClipboardCoder(context);
@@ -112,6 +127,16 @@ public class MainWindow {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 498, 508);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+			    try {
+					context.save(new PrintStream(new File(settingsFile)));
+				} catch (FileNotFoundException e1) {}
+			}
+			  });
+
 		
 		JPanel panel = new JPanel();
 		frame.getContentPane().add(panel, BorderLayout.CENTER);
@@ -142,7 +167,9 @@ public class MainWindow {
 		panel.setLayout(null);
 			
 		comboBox.setModel(new DefaultComboBoxModel(encodernames));
-		comboBox.setSelectedIndex(2);
+		try {
+			comboBox.setSelectedItem(context.getBinaryEncoder((context.getEncoding())).shortName());
+		} catch (QCError e2) {}
 		panel.add(comboBox);
 		
 		JLabel lblBinaryEncoder = new JLabel("Binary Encoder");
@@ -213,6 +240,11 @@ public class MainWindow {
 			}
 		});
 		encryptor.setBounds(10, 46, 138, 20);
+		
+		String selencid = context.getEncryptior();
+		if(selencid.equals("NO"))encryptor.setSelectedIndex(0);
+		else encryptor.setSelectedItem(context.getEncryptor(selencid).shortName());
+		
 		panel.add(encryptor);
 		
 		JButton btnSettings = new JButton("Settings");
@@ -224,7 +256,7 @@ public class MainWindow {
 				context.unlock();
 				
 				if(enc=="NO")
-					JOptionPane.showMessageDialog(null, "No encryption, all messages sent with this mode can be decoded by anyone", enc, JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(null, "No encryption, all messages sent with this mode can be decoded by anyone", "No Encryption", JOptionPane.INFORMATION_MESSAGE);
 				else
 				{
 					encryptorsettings.get(enc).start(frame);
@@ -290,6 +322,7 @@ public class MainWindow {
 		panel.add(chckbxNewCheckBox);
 		
 		JCheckBox chckbxNewCheckBox_1 = new JCheckBox("Use UTF-16 internally");
+		chckbxNewCheckBox_1.setSelected(!context.isFlag1(1));
 		chckbxNewCheckBox_1.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				context.lock();
@@ -307,6 +340,7 @@ public class MainWindow {
 		panel.add(chckbxNewCheckBox_1);
 		
 		JCheckBox chckbxEnableCompression = new JCheckBox("Enable Compression");
+		chckbxEnableCompression.setSelected(context.getCompression()!='0');
 		chckbxEnableCompression.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				context.lock();

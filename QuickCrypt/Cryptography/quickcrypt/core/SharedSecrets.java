@@ -1,7 +1,12 @@
 package quickcrypt.core;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 /** 
@@ -117,5 +122,46 @@ public class SharedSecrets extends Encryptor {
 				+"The label can be seen by people without the secret so do not use personal information or passwords for the label. "
 				+"The key is generated from a password and should be the same password between both the sender and reciver. "
 				+"In order properly share a secret, both the password and the key should be the same.";
+	}
+
+	/**
+	 * Save secrets and context to a PrintStream
+	 */
+	@Override
+	public void save(PrintStream ps) {
+		Hexadecimal hex = new Hexadecimal();
+		
+		ps.println(allSecrets.size()+" "+hex.to(currentSecret.getLabel().getBytes(StandardCharsets.UTF_8)));
+		
+		for(Secret s:allSecrets.values())
+		if(!s.getLabel().equals("DEFAULT"))
+		{
+			String export = s.exportAs(hex,":");
+			ps.println(hex.to(export.getBytes(StandardCharsets.UTF_8)));
+		}
+	}
+	
+	/**
+	 * Load saved secrets from a Scanner
+	 */
+	@Override
+	public void load(Scanner in) throws QCError{
+		
+		if(!in.hasNext())throw new QCError("invalid Shared Secrets input");
+		
+		Hexadecimal hex = new Hexadecimal();
+			
+		int size = in.nextInt();
+		String sellabel = new String(hex.from(in.nextLine().substring(1)),StandardCharsets.UTF_8);
+		
+		for(int x=0;x<size-1;x++)
+		{
+			if(!in.hasNext())throw new QCError("invalid Shared Secrets input");
+			Secret s = new Secret(hex,":",new String(hex.from(in.nextLine()),StandardCharsets.UTF_8));
+			addSecret(s);
+		}
+		
+		selectSecret(sellabel);
+			
 	}
 }

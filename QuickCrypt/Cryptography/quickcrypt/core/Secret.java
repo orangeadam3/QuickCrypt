@@ -34,7 +34,11 @@ public class Secret{
 		}
 		else //key should be treated as a password and hashed with label to get the key
 		{
-			byte[] one = Cryptography.SHA512(key.getBytes(StandardCharsets.UTF_8));
+			byte[] one;
+			
+			if(key==null)one = Cryptography.randomBytes(64); //random?
+			else one = Cryptography.SHA512(key.getBytes(StandardCharsets.UTF_8));
+			
 			byte[] two = Cryptography.SHA512(label.getBytes(StandardCharsets.UTF_8));
 			byte[] merge = new byte[one.length+two.length];
 			
@@ -48,7 +52,27 @@ public class Secret{
 	}
 	
 	/**
-	 * @return unique refrence label
+	 * Import from string
+	 * @param imp string to import from
+	 * @param enc encoder used for key
+	 * @param delim a delimiter that is not an accepted char for enc
+	 * @throws QCError 
+	 */
+	public Secret(BinaryEncoder enc, String delim, String imp) throws QCError {
+		int f = imp.lastIndexOf(delim);
+		if(f<1||f==imp.length()-1)throw new QCError("No \""+delim+"\" in imported secret");
+		
+		this.label = imp.substring(0, f).toUpperCase();
+		this.key = enc.from(imp.substring(f+1));
+		if(key.length!=64)throw new QCError("Key wrong size");
+		
+		if(label.length()==0||label.length()>50)throw new QCError("label too large");
+		
+		bytelabel = label.getBytes(StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * @return unique reference label
 	 */
 	public String getLabel()
 	{
@@ -129,5 +153,9 @@ public class Secret{
 		System.arraycopy(input,4+searchlabelb.length+iv.length,data,0,data.length);
 		
 		return Cryptography.decryptAES(data, key, iv); //decrypt
+	}
+
+	public String exportAs(BinaryEncoder enc, String delim) {
+		return label+delim+getKeyAs(enc);
 	}
 }

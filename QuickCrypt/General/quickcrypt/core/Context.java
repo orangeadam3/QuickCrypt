@@ -5,10 +5,13 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.DataFormatException;
@@ -108,6 +111,16 @@ public class Context {
 	public Context(String head, Context parent) throws QCError {
 		this(parent);
 
+		loadFromInfoHeader(head);
+	}
+	
+	/**
+	 * Gets properties found in header
+	 * @param head Header string containing properties
+	 * @throws QCError
+	 */
+	private void loadFromInfoHeader(String head) throws QCError
+	{
 		setEncryption(head.substring(0, 2));
 		setEncoding(head.charAt(2));
 		setCompression(head.charAt(3));
@@ -849,5 +862,66 @@ public class Context {
 	public void unlock()
 	{
 		lock.unlock();
+	}
+	
+	/**
+	 * Save information to PrintStream
+	 * @param ps stream to save to
+	 */
+	public void save(PrintStream ps)
+	{
+		ps.println("Quick Crypt Context");
+		ps.println("Info Header="+getInfoHeader());
+		ps.println("Encode Images as Text="+ImgtoText);
+		ps.println("Encode Text as Images="+TexttoImg);
+		ps.println("Encryptors");
+		for(Encryptor e : encryptors.values())
+		{
+			ps.println(e.base64Id());
+			e.save(ps);
+		}
+	}
+	
+	public void load(Scanner in) throws QCError
+	{
+		if(!in.hasNextLine()||!in.nextLine().equals("Quick Crypt Context"));
+		
+		//get standard info
+		while(in.hasNextLine())
+		{
+			String next = in.nextLine();
+			if(next.equals("Encryptors"))break;
+			
+			int f = next.indexOf("=");
+			if(f==-1)continue;
+			
+			String setting = next.substring(0, f);
+			next = next.substring(f+1);
+			
+			switch(setting)
+			{
+				case "Info Header":
+					loadFromInfoHeader(next);
+					break;
+					
+				case "Encode Images as Text":
+					ImgtoText = Boolean.parseBoolean(next);
+					break;
+
+				case "Encode Text as Images":
+					TexttoImg = Boolean.parseBoolean(next);
+					break;
+			}
+		}
+		
+		while(in.hasNextLine())
+		{
+			encryptors.get(in.nextLine()).load(in);
+		}
+		
+	}
+
+	public char getCompression() {
+		return compression;
 	}
 }

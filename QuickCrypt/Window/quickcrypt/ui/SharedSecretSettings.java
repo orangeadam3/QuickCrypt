@@ -2,7 +2,9 @@ package quickcrypt.ui;
 
 import javax.swing.JFrame;
 
+import quickcrypt.core.Base64URL;
 import quickcrypt.core.Context;
+import quickcrypt.core.Hexadecimal;
 import quickcrypt.core.QCError;
 import quickcrypt.core.Secret;
 import quickcrypt.core.SharedSecrets;
@@ -16,9 +18,16 @@ import javax.swing.JPopupMenu;
 import javax.swing.JButton;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+
 import java.awt.Font;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+
 import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.awt.event.ItemEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -93,10 +102,64 @@ public class SharedSecretSettings extends EncryptorSettings{
 		frame.getContentPane().add(btnDelete);
 		
 		JButton btnExport = new JButton("Export");
+		btnExport.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!ss.getSelectedSecret().getLabel().equals("DEFAULT"))
+				{ 
+					JTextPane pane = new JTextPane();
+					pane.setEditable(false);
+					pane.setText(ss.getSelectedSecret().exportAs(new Base64URL(), ":"));
+					JOptionPane.showMessageDialog(null, pane, "Exported Code for Selected Secret", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
 		btnExport.setBounds(335, 38, 89, 23);
 		frame.getContentPane().add(btnExport);
 		
 		JButton btnImport = new JButton("Import");
+		btnImport.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String expo = JOptionPane.showInputDialog("Exported Code?");
+				if(expo==null||expo.length()==0)return;
+				if(expo.endsWith(Context.backHead)) //treat as encrypted data
+				{
+					context.lock();
+					try {
+						Transferable tmp = context.decodeText(expo);
+						if(tmp!=null&&tmp.isDataFlavorSupported(DataFlavor.stringFlavor))expo = (String) tmp.getTransferData(DataFlavor.stringFlavor);
+					} catch (Exception e2) {System.err.println("Rip, failed to decode, treating as unencoded");} //if setting failed just ignore and move on
+					context.unlock();
+				}
+				
+				Secret sec;
+				try {
+					sec = new Secret(new Base64URL(), ":", expo);
+				} catch (QCError e1) {
+					JOptionPane.showMessageDialog(null, "Invalid exported code", "Error", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				
+				if(sec.getLabel().equals("DEFAULT")) {
+					JOptionPane.showMessageDialog(null, "Cannot set the DEFAULT secret", "Error", JOptionPane.INFORMATION_MESSAGE);return;}
+				
+				context.lock();
+				if(ss.getSecret(sec.getLabel())!=null)
+				{
+					context.unlock();
+					if(JOptionPane.showConfirmDialog(null, "An existing secret has the same label as this one!\n Would you like to overwrite existing secret?","Error",JOptionPane.YES_NO_OPTION)==1)
+						return;
+					context.lock();
+				}
+				ss.addSecret(sec);
+				
+				try {
+					ss.selectSecret(sec.getLabel());
+					refreshLabels();
+				} catch (QCError e1) {}
+				
+				context.unlock();
+			}
+		});
 		btnImport.setBounds(335, 228, 89, 23);
 		frame.getContentPane().add(btnImport);
 		
@@ -162,6 +225,46 @@ public class SharedSecretSettings extends EncryptorSettings{
 		lblPassword.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblPassword.setBounds(8, 200, 67, 14);
 		frame.getContentPane().add(lblPassword);
+		
+		JButton btnAddWithRandom = new JButton("Add Random Key");
+		btnAddWithRandom.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				if(textField.getText().length()==0||textField.getText().length()>50) {
+					JOptionPane.showMessageDialog(null, "The length of the label must be between 1 and 50", "Error", JOptionPane.INFORMATION_MESSAGE);return;}
+				
+				Secret sec;
+				try {
+					sec = new Secret(textField.getText(),null,null);
+				} catch (QCError e1) {
+					JOptionPane.showMessageDialog(null, "Failed to generate key", "Error", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				
+				if(sec.getLabel().equals("DEFAULT")) {
+					JOptionPane.showMessageDialog(null, "Cannot set the DEFAULT secret", "Error", JOptionPane.INFORMATION_MESSAGE);return;}
+				
+				context.lock();
+				if(ss.getSecret(sec.getLabel())!=null)
+				{
+					context.unlock();
+					if(JOptionPane.showConfirmDialog(null, "An existing secret also has this label!\n Would you like to overwrite existing secret?","Error",JOptionPane.YES_NO_OPTION)==1)
+						return;
+					context.lock();
+				}
+				ss.addSecret(sec);
+				
+				try {
+					ss.selectSecret(sec.getLabel());
+					refreshLabels();
+				} catch (QCError e1) {}
+				
+				context.unlock();
+				
+			}
+		});
+		btnAddWithRandom.setBounds(173, 228, 152, 23);
+		frame.getContentPane().add(btnAddWithRandom);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
 	}
