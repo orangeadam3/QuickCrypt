@@ -27,6 +27,11 @@ import java.awt.datatransfer.Transferable;
 import javax.swing.JCheckBox;
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import javax.swing.JEditorPane;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import java.awt.Scrollbar;
 
 public class MainWindow {
 
@@ -41,6 +46,9 @@ public class MainWindow {
 	private Map<Character, BinaryEncoder> encoders;
 	
 	private Map<String,EncryptorSettings> encryptorsettings;
+	
+	JTextArea txtrTestMessage;
+	private final JScrollPane scrollPane_1 = new JScrollPane();
 	
 	/**
 	 * Launch the application.
@@ -226,12 +234,7 @@ public class MainWindow {
 		btnSettings.setBounds(150, 45, 89, 23);
 		panel.add(btnSettings);
 		
-		final JTextPane txtpnHello = new JTextPane();
-		txtpnHello.setText("Test Message");
-		txtpnHello.setBounds(10, 299, 462, 141);
-		panel.add(txtpnHello);
-		
-		Button button = new Button("Encrypt/Decrypt text");
+		JButton button = new JButton("Encrypt/Decrypt text");
 		button.setActionCommand("");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -240,11 +243,11 @@ public class MainWindow {
 				context.TexttoImg = false;
 				
 				try {
-					if(txtpnHello.getText().length()==0)throw new QCError("Empty input");
-					Transferable out = context.code(new StringSelection(txtpnHello.getText()));
+					if(txtrTestMessage.getText().length()==0)throw new QCError("Empty input");
+					Transferable out = context.code(new StringSelection(txtrTestMessage.getText()));
 
 					try {
-						txtpnHello.setText((String) out.getTransferData(DataFlavor.stringFlavor));
+						txtrTestMessage.setText((String) out.getTransferData(DataFlavor.stringFlavor));
 					} catch (Exception e1) {
 						throw new QCError("Decrypted data must be text");
 					}
@@ -317,5 +320,30 @@ public class MainWindow {
 		});
 		chckbxEnableCompression.setBounds(10, 111, 212, 23);
 		panel.add(chckbxEnableCompression);
+		
+		JButton btnNewButton = new JButton("Encrypt/Decrypt clipboard");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				context.lock();
+				try {
+					clippy.code();
+				} catch (QCError e1) {
+					JOptionPane.showMessageDialog(null, "Error: "+e1.getMessage(), "Error coding", JOptionPane.ERROR_MESSAGE);
+				}
+				context.unlock();
+			}
+		});
+		btnNewButton.setBounds(279, 440, 193, 23);
+		panel.add(btnNewButton);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(243, 237, -106, -69);
+		panel.add(scrollPane);
+		scrollPane_1.setBounds(10, 295, 462, 140);
+		panel.add(scrollPane_1);
+		
+		txtrTestMessage = new JTextArea();
+		scrollPane_1.setViewportView(txtrTestMessage);
+		txtrTestMessage.setText("Test Message");
 	}
 }
