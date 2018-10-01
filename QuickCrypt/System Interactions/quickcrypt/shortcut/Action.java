@@ -3,6 +3,8 @@ import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
+import javax.swing.JOptionPane;
+
 import it.sauronsoftware.junique.AlreadyLockedException;
 import it.sauronsoftware.junique.JUnique;
 import quickcrypt.core.Context;
@@ -128,8 +130,7 @@ public class Action extends Thread {
 		robot.keyPress('C');
 		robot.keyRelease('C');
 		robot.waitForIdle();
-		robot.keyRelease(KeyEvent.VK_CONTROL);
-		robot.delay(100); // wait for program to relinquish clipboard
+		robot.delay(50); // wait for program to grab clipboard
 
 		try {
 			clippy.code();
@@ -137,16 +138,19 @@ public class Action extends Thread {
 			//manage errors
 			clippy.pop();
 			System.err.println("Error: " + e.getMessage());
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Coding Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-
+		
+		boolean ctrlReleased = true;
+		
 		//paste to focused program
-		robot.keyPress(KeyEvent.VK_CONTROL);
+		if(ctrlReleased)robot.keyPress(KeyEvent.VK_CONTROL);
 		robot.keyPress('V');
 		robot.keyRelease('V');
 		robot.waitForIdle();
-		robot.keyRelease(KeyEvent.VK_CONTROL);
-		robot.delay(100); // wait for program to relinquish clipboard
+		if(ctrlReleased)robot.keyRelease(KeyEvent.VK_CONTROL);
+		robot.delay(50); // wait for program to grab clipboard
 
 		clippy.pop();
 	}

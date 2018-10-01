@@ -53,10 +53,10 @@ public class ClipboardCoder implements ClipboardOwner {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		Transferable out;
 
-		out = context.code(clipboard.getContents(this)); //code(copyied data)
+		out = context.code(get(clipboard)); //code(copyied data)
 
 		if (paste)
-			clipboard.setContents(out, this); //paste
+			set(clipboard,out); //paste
 
 		return out;
 	}
@@ -79,7 +79,7 @@ public class ClipboardCoder implements ClipboardOwner {
 		if (paste)
 		{
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			clipboard.setContents(out, this);
+			set(clipboard,out);
 		}
 
 		return out;
@@ -88,11 +88,15 @@ public class ClipboardCoder implements ClipboardOwner {
 	/**
 	 * Saves a copy of the current clipboard data to use pop() later
 	 * 
-	 * @return current clipboard data
+	 * @return current clipboard data or null if inaccessable
 	 */
 	Transferable push() {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		return pushedData = clipboard.getContents(this);
+		try {
+			return pushedData = get(clipboard);
+		} catch (QCError e) {
+			return null;
+		}
 	}
 
 	/**
@@ -104,9 +108,41 @@ public class ClipboardCoder implements ClipboardOwner {
 			return;
 
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		clipboard.setContents(pushedData, this);
+		try {
+			set(clipboard,pushedData);
+		} catch (QCError e) {
+		}
 	}
 
+	public void set(Clipboard clipboard, Transferable data) throws QCError
+	{
+		long goal=System.currentTimeMillis()+3000;
+		while(System.currentTimeMillis()<goal)
+		{
+			try {
+			clipboard.setContents(data, this);
+			return;
+			} catch(IllegalStateException e){}
+			try {Thread.sleep(100);}
+			catch (InterruptedException e) {}
+		}
+		throw new QCError("Clipboard took to long to relinquish");
+	}
+	
+	public Transferable get(Clipboard clipboard) throws QCError
+	{
+		long goal=System.currentTimeMillis()+3000;
+		while(System.currentTimeMillis()<goal)
+		{
+			try {
+			return clipboard.getContents(this);
+			} catch(IllegalStateException e){}
+			try {Thread.sleep(100);}
+			catch (InterruptedException e) {}
+		}
+		throw new QCError("Clipboard took to long to relinquish");
+	}
+	
 	/**
 	 * Required function for implementing ClipboardOwner, does nothing
 	 */

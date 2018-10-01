@@ -265,6 +265,28 @@ public class SharedSecretSettings extends EncryptorSettings{
 		});
 		btnAddWithRandom.setBounds(173, 228, 152, 23);
 		frame.getContentPane().add(btnAddWithRandom);
+		
+		JComboBox Algo = new JComboBox();
+		Algo.setModel(new DefaultComboBoxModel(new String[] {"AES-128", "AES-256"}));
+		if(ss.getSymetricAlgorithmCode().equals("AS5"))Algo.setSelectedItem("AES-256");
+		else Algo.setSelectedItem("AES-128");
+		
+		Algo.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				String name = (String) ((JComboBox<?>)e.getSource()).getSelectedItem();
+				if(name.equals("AES-128"))
+					ss.setSymetricAlgorithmCode("AS4");
+				
+				else if(name.equals("AES-256"))
+					ss.setSymetricAlgorithmCode("AS5");
+			}
+		});
+		Algo.setBounds(240, 39, 89, 20);
+		frame.getContentPane().add(Algo);
+		
+		JLabel lblAlgorithm = new JLabel("Algorithm:");
+		lblAlgorithm.setBounds(173, 39, 67, 20);
+		frame.getContentPane().add(lblAlgorithm);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
 	}

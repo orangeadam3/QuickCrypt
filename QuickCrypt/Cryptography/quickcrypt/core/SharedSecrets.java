@@ -31,7 +31,7 @@ public class SharedSecrets extends Encryptor {
 		currentSecret = new Secret("DEFAULT",hex.to(Cryptography.SHA512(("passwordDEFAULT").getBytes(StandardCharsets.UTF_8))),hex);
 		allSecrets = new HashMap<String,Secret>();
 		allSecrets.put(currentSecret.label, currentSecret);
-		symtype = "AS5"; //default AES-256
+		symtype = "AS4"; //default AES-128
 	}
 	
 	/**
@@ -117,7 +117,7 @@ public class SharedSecrets extends Encryptor {
 
 	@Override
 	public String description() {
-		return "Uses up to 512-bit symetric encryption algorithms to encrypt in such a way that, "
+		return "Uses up to 256-bit symetric encryption algorithms to encrypt in such a way that, "
 				+"the sender and reciver must know the same \"secret\" in order to transfer the message. "
 				+"Any would be spys are unable to read an intercepted message without knowing te secret.\n"
 				+"The secret takes the form of a Label and a Key. "
@@ -148,6 +148,8 @@ public class SharedSecrets extends Encryptor {
 	public void save(PrintStream ps) {
 		Hexadecimal hex = new Hexadecimal();
 		
+		ps.println("Algorithm="+symtype);
+		ps.println("Secrets");
 		ps.println(allSecrets.size()+" "+hex.to(currentSecret.getLabel().getBytes(StandardCharsets.UTF_8)));
 		
 		for(Secret s:allSecrets.values())
@@ -167,7 +169,25 @@ public class SharedSecrets extends Encryptor {
 		if(!in.hasNext())throw new QCError("invalid Shared Secrets input");
 		
 		Hexadecimal hex = new Hexadecimal();
-			
+		
+		String line;
+		while(!(line = in.nextLine()).equals("Secrets"))
+		{
+			int f = line.indexOf("=");
+			if(f!=-1)
+			{
+				String setting = line.substring(0, f);
+				line = line.substring(f+1);
+				switch(setting)
+				{
+				case "Algorithm":
+					symtype = line;
+					break;
+				}
+			}
+			if(!in.hasNextLine())throw new QCError("invalid Shared Secrets input");
+		}
+		
 		int size = in.nextInt();
 		String sellabel = new String(hex.from(in.nextLine().substring(1)),StandardCharsets.UTF_8);
 		

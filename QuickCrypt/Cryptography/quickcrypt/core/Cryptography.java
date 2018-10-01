@@ -50,6 +50,22 @@ public class Cryptography {
 	 }
 	
 	/**
+	 * hashes any input data using SHA256 and MessageDigest
+	 * @param input bytes to hash
+	 * @return 32 bytes to return
+	 */
+	public static byte[] SHA256(byte[] input){
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {return null;}
+		
+		digest.reset();
+		digest.update(input);
+		return digest.digest();
+	 }
+	
+	/**
 	 * Encrypts any bytes with AES256
 	 * @param input bytes to encrypt
 	 * @param key 256-bit (32-byte) secret key

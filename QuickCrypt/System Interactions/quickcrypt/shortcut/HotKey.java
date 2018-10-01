@@ -1,4 +1,9 @@
 package quickcrypt.shortcut;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+import org.jnativehook.keyboard.NativeKeyEvent;
+import org.jnativehook.keyboard.NativeKeyListener;
+
 import com.melloware.jintellitype.HotkeyListener;
 import com.melloware.jintellitype.JIntellitype;
 
@@ -12,13 +17,15 @@ import quickcrypt.core.QCError;
  * @author Adam Spiegel
  */
 
-public class HotKey implements ActionReturn{
+public class HotKey implements NativeKeyListener, ActionReturn{
 	
 	private Action action;
 	private HotKey This;
 	private int key;
 	
 	HotkeyListener jintlist;
+	
+	String osname;
 	
 	/**
 	 * Creates a HotKey object
@@ -33,7 +40,7 @@ public class HotKey implements ActionReturn{
 		 This = this;
 		 this.key = key;
 		 
-		 String osname = System.getProperty("os.name");
+		 osname = System.getProperty("os.name");
 		 
 		 //will use different methods for different OSes based on efficiency and availability
 		 if(osname.startsWith("Windows"))setup_JIntellitype();
@@ -63,14 +70,35 @@ public class HotKey implements ActionReturn{
 	 */
 	public void stop()
 	{
-		JIntellitype.getInstance().unregisterHotKey(6969);
-		JIntellitype.getInstance().removeHotKeyListener(jintlist);
+		if(osname.startsWith("windows"))
+		{
+			JIntellitype.getInstance().unregisterHotKey(6969);
+			JIntellitype.getInstance().removeHotKeyListener(jintlist);
+		}
 	}
 
 	/**
 	 * Callback for when the Action object is done
 	 */
 	public void actionDone() {
+		
+	}
+
+	@Override
+	public void nativeKeyPressed(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nativeKeyReleased(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nativeKeyTyped(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
 		
 	}
 }

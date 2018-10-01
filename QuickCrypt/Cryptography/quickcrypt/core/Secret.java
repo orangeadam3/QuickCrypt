@@ -23,7 +23,6 @@ public class Secret{
 	public Secret(String label, String key, BinaryEncoder load) throws QCError
 	{
 		label = label.toUpperCase(Locale.ROOT);
-		if(label.indexOf(" ")!=-1)throw new QCError("Space Found in Label");
 		bytelabel = label.getBytes(StandardCharsets.UTF_8);
 		if(bytelabel.length>255)throw new QCError("Label too long");
 		this.label = label;
@@ -36,19 +35,19 @@ public class Secret{
 		{
 			byte[] one;
 			
-			if(key==null)one = Cryptography.randomBytes(64); //random?
-			else one = Cryptography.SHA512(key.getBytes(StandardCharsets.UTF_8));
+			if(key==null)one = Cryptography.randomBytes(32); //random?
+			else one = Cryptography.SHA256(key.getBytes(StandardCharsets.UTF_8));
 			
-			byte[] two = Cryptography.SHA512(label.getBytes(StandardCharsets.UTF_8));
+			byte[] two = Cryptography.SHA256(label.getBytes(StandardCharsets.UTF_8));
 			byte[] merge = new byte[one.length+two.length];
 			
 			System.arraycopy(one,0,merge,0         ,one.length);
 			System.arraycopy(two,0,merge,one.length,two.length);
 			
-			this.key = Cryptography.SHA512(merge);
+			this.key = Cryptography.SHA256(merge);
 		}
 		
-		if(this.key.length!=64)throw new QCError("Invalid key size"); //input was not 64 bytes
+		if(this.key.length<32)throw new QCError("Invalid key size"); //input was not 32 bytes or higher
 	}
 	
 	/**
@@ -64,7 +63,7 @@ public class Secret{
 		
 		this.label = imp.substring(0, f).toUpperCase();
 		this.key = enc.from(imp.substring(f+1));
-		if(key.length!=64)throw new QCError("Key wrong size");
+		if(key.length<32)throw new QCError("Key wrong size");
 		
 		if(label.length()==0||label.length()>50)throw new QCError("label too large");
 		

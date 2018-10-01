@@ -17,6 +17,7 @@ import javax.swing.DefaultComboBoxModel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -379,5 +380,29 @@ public class MainWindow {
 		txtrTestMessage = new JTextArea();
 		scrollPane_1.setViewportView(txtrTestMessage);
 		txtrTestMessage.setText("Test Message");
+		
+		JCheckBox chckbxEncodeImagesAs = new JCheckBox("Encode images as text");
+		chckbxEncodeImagesAs.setSelected(context.ImgtoText);
+		chckbxEncodeImagesAs.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				context.lock();
+				context.ImgtoText = (e.getStateChange() != ItemEvent.DESELECTED);
+				context.unlock();
+			}
+		});
+		chckbxEncodeImagesAs.setBounds(296, 111, 158, 23);
+		panel.add(chckbxEncodeImagesAs);
+		
+		JCheckBox chckbxEncodeTextAs = new JCheckBox("Encode text as images");
+		chckbxEncodeTextAs.setSelected(context.TexttoImg);
+		chckbxEncodeTextAs.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				context.lock();
+				context.TexttoImg = (e.getStateChange() != ItemEvent.DESELECTED);
+				context.unlock();
+			}
+		});
+		chckbxEncodeTextAs.setBounds(296, 137, 158, 23);
+		panel.add(chckbxEncodeTextAs);
 	}
 }

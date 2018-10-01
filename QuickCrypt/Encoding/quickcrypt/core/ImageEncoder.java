@@ -338,8 +338,6 @@ public class ImageEncoder {
 			return null; //no candidate block sizes found
 		blockSize = bestBlockSize;
 
-		System.out.println(blockSize);
-
 		int bwidth = width / blockSize; //width in blocks
 
 		//get palate
