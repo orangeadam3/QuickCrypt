@@ -63,13 +63,15 @@ public class Cryptography {
 			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 			return cipher.doFinal(input);
-			
 		} catch (InvalidKeyException e) {
-			throw new QCError("Invalid Key");
+			if(e.getMessage().equals("Illegal key size"))
+				throw new QCError("Illegal key size, this probobly means that, AES-"+(key.length*8)
+								+" is not supported or not allowed by your machine's java try a smaller AES");
+			throw new QCError(e.getMessage());
 		} catch (IllegalBlockSizeException e) {
 			throw new QCError("Block size, "+key.length+", is illegal");
 		} catch (BadPaddingException e) {
-			throw new QCError("Padding in encrypted text incorrect");
+			throw new QCError("Bad Padding: "+e.getMessage());
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return null;
@@ -98,11 +100,14 @@ public class Cryptography {
 			return cipher.doFinal(input);
 			
 		} catch (InvalidKeyException e) {
-			throw new QCError("Invalid Key");
+			if(e.getMessage().equals("Illegal key size"))
+				throw new QCError("Illegal key size, this probobly means that, AES-"+(key.length*8)
+								+" is not supported or not allowed by your machine's java try a smaller AES");
+			throw new QCError(e.getMessage());
 		} catch (IllegalBlockSizeException e) {
 			throw new QCError("Block size, "+key.length+", is illegal");
 		} catch (BadPaddingException e) {
-			throw new QCError("Padding in encrypted text incorrect");
+			throw new QCError("Bad Padding or Incorrect key: "+e.getMessage());
 		} catch (NoSuchAlgorithmException e) {
 			throw new QCError("No Such Algorithm Exception");
 		} catch (NoSuchPaddingException e) {
