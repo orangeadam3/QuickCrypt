@@ -95,19 +95,29 @@ public class Secret{
 	 * @return encrypted data
 	 * @throws QCError something went wrong with encryption
 	 */
-	public byte[] encrypt(byte[] input) throws QCError
+	public byte[] encrypt(byte[] input, String type) throws QCError
 	{
 		//chop key to 32 bytes
-		byte[] k = new byte[32];
-		System.arraycopy(key,0,k,0,32);
-
-		byte[] iv = Cryptography.randomBytes(16); //get iv
+		byte[] k, iv, data;
 		
-		byte[] data = Cryptography.encryptAES(input,k,iv); ///actual encryption
+		if(type.equals("AS5")) //AES-256
+		{
+			k = new byte[32];
+			iv = Cryptography.randomBytes(16); //get iv
+		}
+		else if(type.equals("AS4")) //AES-128
+		{
+			k = new byte[16];
+			iv = Cryptography.randomBytes(16); //get iv
+		}
+		else throw new QCError("Unknown Symetric algorithm, "+type);
+		
+		System.arraycopy(key,0,k,0,k.length);
+		data = Cryptography.encryptAES(input,k,iv); ///actual encryption
 		
 		//format output
 		byte[] out = new byte[4+bytelabel.length+iv.length+data.length];
-		out[0] = 'A';out[1] = 'S';out[2] = '5'; //encryption type
+		out[0] = (byte)type.charAt(0); out[1] = (byte)type.charAt(1);out[2] = (byte)type.charAt(2); //encryption type
 		out[3] = (byte) bytelabel.length;
 		
 		System.arraycopy(bytelabel,0,out,4,bytelabel.length); ///store secret label
@@ -141,11 +151,23 @@ public class Secret{
 		if(secret==null)throw new QCError("Unknown secret needed for decryption; label=\""+searchlabel+"\"");
 		
 		//chop new key to 32 bytes
-		byte[] key = new byte[32];
-		System.arraycopy(secret.key,0,key,0,32);
+		byte[] key, iv;
+		
+		if(input[0]=='A'&&input[1]=='S'&&input[2]=='5')
+		{
+			key = new byte[32];
+			iv = new byte[16];
+		}
+		else if(input[0]=='A'&&input[1]=='S'&&input[2]=='4')
+		{
+			key = new byte[16];
+			iv = new byte[16];
+		}
+		else throw new QCError("Unknown Symetric algorithm: "+((char)input[0])+((char)input[1])+((char)input[2]));
+		
+		System.arraycopy(secret.key,0,key,0,key.length);
 		
 		///get iv
-		byte[] iv = new byte[16];
 		System.arraycopy(input,4+searchlabelb.length,iv,0,iv.length);
 		
 		//get encrypted data
