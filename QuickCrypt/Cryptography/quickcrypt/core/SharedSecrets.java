@@ -19,6 +19,8 @@ public class SharedSecrets extends Encryptor {
 	Map<String,Secret> allSecrets;
 	Secret currentSecret;
 	
+	String symtype;
+	
 	/**
 	 * Creates an object with only the default secret
 	 * @throws QCError if there was an error generating the default secret
@@ -29,6 +31,7 @@ public class SharedSecrets extends Encryptor {
 		currentSecret = new Secret("DEFAULT",hex.to(Cryptography.SHA512(("passwordDEFAULT").getBytes(StandardCharsets.UTF_8))),hex);
 		allSecrets = new HashMap<String,Secret>();
 		allSecrets.put(currentSecret.label, currentSecret);
+		symtype = "AS5"; //default AES-256
 	}
 	
 	/**
@@ -36,7 +39,7 @@ public class SharedSecrets extends Encryptor {
 	 */
 	public byte[] encrypt(byte[] in) throws QCError
 	{
-		return currentSecret.encrypt(in);
+		return currentSecret.encrypt(in,symtype);
 	}
 	
 	/**
@@ -122,6 +125,20 @@ public class SharedSecrets extends Encryptor {
 				+"The label can be seen by people without the secret so do not use personal information or passwords for the label. "
 				+"The key is generated from a password and should be the same password between both the sender and reciver. "
 				+"In order properly share a secret, both the password and the key should be the same.";
+	}
+	
+	/**
+	 * Sets code for encryption algorithm to use when encrypting
+	 * @param code 3 character ASCII code referencing algorithm e.x. "AS5" for AES-256 and "AS4" for AES-128
+	 */
+	public void setSymetricAlgorithmCode(String code)
+	{
+		symtype = code;
+	}
+	
+	public String getSymetricAlgorithmCode()
+	{
+		return symtype;
 	}
 
 	/**
