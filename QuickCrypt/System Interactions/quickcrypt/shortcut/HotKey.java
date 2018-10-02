@@ -70,7 +70,7 @@ public class HotKey implements NativeKeyListener, ActionReturn{
 	 */
 	public void stop()
 	{
-		if(osname.startsWith("windows"))
+		if(osname.startsWith("Windows"))
 		{
 			JIntellitype.getInstance().unregisterHotKey(6969);
 			JIntellitype.getInstance().removeHotKeyListener(jintlist);
