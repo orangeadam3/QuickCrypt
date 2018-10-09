@@ -49,14 +49,12 @@ public class ClipboardCoder implements ClipboardOwner {
 	 * @throws QCError
 	 */
 	Transferable code(boolean paste) throws QCError {
-		//get clipboard
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		Transferable out;
 
-		out = context.code(get(clipboard)); //code(copyied data)
+		out = context.code(get()); //code(copyied data)
 
 		if (paste)
-			set(clipboard,out); //paste
+			set(out); //paste
 
 		return out;
 	}
@@ -71,15 +69,14 @@ public class ClipboardCoder implements ClipboardOwner {
 	 * @return encoded or decoded result
 	 * @throws QCError
 	 */
-	Transferable code(Transferable in, boolean paste) throws QCError {
+	public Transferable code(Transferable in, boolean paste) throws QCError {
 		Transferable out;
 
 		out = context.code(in);
 
 		if (paste)
 		{
-			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			set(clipboard,out);
+			set(out);
 		}
 
 		return out;
@@ -90,10 +87,9 @@ public class ClipboardCoder implements ClipboardOwner {
 	 * 
 	 * @return current clipboard data or null if inaccessable
 	 */
-	Transferable push() {
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	public Transferable push() {
 		try {
-			return pushedData = get(clipboard);
+			return pushedData = get();
 		} catch (QCError e) {
 			return null;
 		}
@@ -103,24 +99,23 @@ public class ClipboardCoder implements ClipboardOwner {
 	 * Puts data that was in the clipboard the last time push() was called, back
 	 * into the clipboard.
 	 */
-	void pop() {
+	public void pop() {
 		if (pushedData == null)
 			return;
 
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		try {
-			set(clipboard,pushedData);
+			set(pushedData);
 		} catch (QCError e) {
 		}
 	}
 
-	public void set(Clipboard clipboard, Transferable data) throws QCError
+	public void set(Transferable data) throws QCError
 	{
 		long goal=System.currentTimeMillis()+3000;
 		while(System.currentTimeMillis()<goal)
 		{
 			try {
-			clipboard.setContents(data, this);
+				Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, this);
 			return;
 			} catch(IllegalStateException e){}
 			try {Thread.sleep(100);}
@@ -129,13 +124,13 @@ public class ClipboardCoder implements ClipboardOwner {
 		throw new QCError("Clipboard took to long to relinquish");
 	}
 	
-	public Transferable get(Clipboard clipboard) throws QCError
+	public Transferable get() throws QCError
 	{
 		long goal=System.currentTimeMillis()+3000;
 		while(System.currentTimeMillis()<goal)
 		{
 			try {
-			return clipboard.getContents(this);
+			return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
 			} catch(IllegalStateException e){}
 			try {Thread.sleep(100);}
 			catch (InterruptedException e) {}

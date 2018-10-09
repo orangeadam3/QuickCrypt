@@ -86,6 +86,7 @@ public class MainWindow {
 			context.addBinaryEncoder(new Hexadecimal());
 			context.addBinaryEncoder(new Base64URL());
 			context.addBinaryEncoder(new CJK4096());
+			context.addBinaryEncoder(new Emoji256());
 			
 			sharedsecrets = new SharedSecrets();
 			context.addEncryptor(sharedsecrets);
@@ -404,5 +405,17 @@ public class MainWindow {
 		});
 		chckbxEncodeTextAs.setBounds(296, 137, 158, 23);
 		panel.add(chckbxEncodeTextAs);
+		
+		JCheckBox chckbxDoNotAttempt = new JCheckBox("Do not attempt to decode");
+		chckbxDoNotAttempt.setSelected(!context.tryDecode);
+		chckbxDoNotAttempt.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				context.lock();
+				context.tryDecode = (e.getStateChange() == ItemEvent.DESELECTED);
+				context.unlock();
+			}
+		});
+		chckbxDoNotAttempt.setBounds(296, 163, 176, 23);
+		panel.add(chckbxDoNotAttempt);
 	}
 }

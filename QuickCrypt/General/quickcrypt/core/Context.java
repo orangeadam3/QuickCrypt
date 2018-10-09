@@ -5,7 +5,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -43,8 +42,11 @@ public class Context {
 	private char compression;
 	private int flags1;
 	private int flags2;
+	
+	//non header settings
 	public boolean ImgtoText; //TODO getter/setter
 	public boolean TexttoImg;
+	public boolean tryDecode;
 
 	private int imageEncodingBlockSize = 1;
 
@@ -59,8 +61,10 @@ public class Context {
 		compression = '0';
 		flags1 = 0;
 		flags2 = 0;
+		
 		ImgtoText = true;
 		TexttoImg = false;
+		tryDecode = true;
 
 		hex = new Hexadecimal();
 
@@ -79,6 +83,7 @@ public class Context {
 	 *            Context to copy from
 	 */
 	public Context(Context a) {
+		super();
 		encryption = a.encryption;
 		encoding = a.encoding;
 		compression = a.compression;
@@ -86,6 +91,7 @@ public class Context {
 		flags2 = a.flags2;
 		ImgtoText = a.ImgtoText;
 		TexttoImg = a.TexttoImg;
+		tryDecode = a.tryDecode;
 
 		hex = a.hex;
 
@@ -729,10 +735,13 @@ public class Context {
 				//get input String
 				String data = (String) in.getTransferData(DataFlavor.stringFlavor);
 
-				//try to decode the string
-				Transferable dec = decodeText(data);
-				if (dec != null)
-					return dec;
+				if(tryDecode)
+				{
+					//try to decode the string
+					Transferable dec = decodeText(data);
+					if (dec != null)
+						return dec;
+				}
 
 				//default, encode the string as text
 				if (!TexttoImg)
@@ -746,11 +755,14 @@ public class Context {
 
 				//get input Image
 				Image data = (Image) in.getTransferData(DataFlavor.imageFlavor);
-
-				//try to decode the image
-				Transferable dec = decodeImg(data);
-				if (dec != null)
-					return dec;
+				
+				if(tryDecode)
+				{
+					//try to decode the image
+					Transferable dec = decodeImg(data);
+					if (dec != null)
+						return dec;
+				}
 
 				//default, encode the image as an image
 				if (!ImgtoText)
