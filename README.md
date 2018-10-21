@@ -7,7 +7,7 @@ Can encode or decode as images or text with various encoding and encryption meth
 Custom Encoders:<br/>
 Hexadecimal<br/>
 Base-64<br/>
-Base-4096 with Chinese/Japanese/Korean symbols<br/><br/>
+Base-4096 with Chinese/Japanese/Korean symbols<br/>
 Base-256 with Emoji symbols<br/>
 Encoding as an image: somewhat resistant to lossy compression.
 
