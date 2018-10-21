@@ -17,7 +17,7 @@ Shared Secrets (AES-128 & AES-256)
 
 Features:
 Ability to encode and encrypt any text or any image.
-Do an encodeing/decoding operation on the clipboard
+Do an encoding/decoding operation on the clipboard
 Has an optional custom keyboard shortcut for quickly encoding/decoding selected or copied text (Ctrl-E)
 Export or import Secrets for AES cryptography
 
