@@ -123,7 +123,7 @@ public class ImageEncoder {
 		for (int x = 0; x <= 8; x++) ///encoding pallet
 			BinaryEncoder.setBits(put, 3 * x, 3, x % 8);
 
-		///special key
+		///magic number
 		BinaryEncoder.setBits(put, 3 * (8 + 1), 32, 1234567890);
 
 		///length
@@ -135,9 +135,9 @@ public class ImageEncoder {
 		//determine best width and height
 		int width = blockSize, height = 1;
 
-		while ((width / blockSize) * (height / blockSize) < truelen) {
-			if (height > width * 1.5)
-				width *= 2;
+		while ((width / blockSize) * (height / blockSize) < truelen + 8) {
+			if (height > width * 1.1)
+				width += blockSize;
 			else
 				height++;
 		}
@@ -157,12 +157,18 @@ public class ImageEncoder {
 					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, rgb);
 		}
 
-		//fill the rest with black pixels
-		for (int i = truelen; i < (width / blockSize) * (height / blockSize); i++)
+		//fill an additional 8 with palatte
+		for (int i = truelen; i < truelen + 8; i++)
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, Color.BLACK.getRGB());
-
+					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palatte[i - truelen].getRGB());
+		
+		//fill the end with palatte[0]
+		for (int i = truelen + 8; i < (width / blockSize) * (height / blockSize); i++)
+			for (int x = 0; x < blockSize; x++)
+				for (int y = 0; y < blockSize; y++)
+					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palatte[0].getRGB());
+		
 		return out;
 	}
 
@@ -278,7 +284,7 @@ public class ImageEncoder {
 	}
 
 	/**
-	 * Decode Image that contatins encoded information by DataEncode()
+	 * Decode Image that contains encoded information by DataEncode()
 	 * 
 	 * @param in
 	 *            Image to decode
@@ -358,7 +364,7 @@ public class ImageEncoder {
 		if (len > 1073741824)
 			return null;
 
-		//find where header ends and data dtarts
+		//find where header ends and data starts
 		int dataoffbits = 3 * (palatteSize + 1) + 32 + 32;
 		if (dataoffbits % (8 * 3) != 0)
 			dataoffbits += 24 - (dataoffbits % (8 * 3));
