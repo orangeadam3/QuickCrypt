@@ -48,7 +48,8 @@ public class Context {
 	public boolean TexttoImg;
 	public boolean tryDecode;
 
-	private int imageEncodingBlockSize = 1;
+	public int imageEncodingBlockSize = 1;
+	public int paletteBits = 3;
 
 	/**
 	 * Creates a context with default values, to be used as a master context
@@ -631,7 +632,7 @@ public class Context {
 		System.arraycopy(head, 0, toenc, 0, head.length);
 		System.arraycopy(body, 0, toenc, head.length, body.length);
 
-		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize); //encode toenc as Image
+		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(paletteBits)); //encode toenc as Image
 	}
 
 	/**
@@ -654,7 +655,7 @@ public class Context {
 		System.arraycopy(head, 0, toenc, 0, head.length);
 		System.arraycopy(body, 0, toenc, head.length, body.length);
 
-		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize); //encode toenc as Image
+		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(paletteBits)); //encode toenc as Image
 	}
 
 	/**
@@ -886,6 +887,9 @@ public class Context {
 		ps.println("Info Header="+getInfoHeader());
 		ps.println("Encode Images as Text="+ImgtoText);
 		ps.println("Encode Text as Images="+TexttoImg);
+		ps.println("Attempt to Decode="+tryDecode);
+		ps.println("Image Block Width="+imageEncodingBlockSize);
+		ps.println("Bits per Image Block="+paletteBits);
 		ps.println("Encryptors");
 		for(Encryptor e : encryptors.values())
 		{
@@ -922,6 +926,18 @@ public class Context {
 
 				case "Encode Text as Images":
 					TexttoImg = Boolean.parseBoolean(next);
+					break;
+					
+				case "Attempt to Decode":
+					tryDecode = Boolean.parseBoolean(next);
+					break;
+					
+				case "Image Block Width":
+					imageEncodingBlockSize = Integer.parseInt(next);
+					break;
+					
+				case "Bits per Image Block":
+					paletteBits = Integer.parseInt(next);
 					break;
 			}
 		}

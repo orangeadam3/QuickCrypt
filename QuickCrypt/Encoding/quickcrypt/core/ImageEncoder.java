@@ -92,42 +92,47 @@ public class ImageEncoder {
 	 *            size of the side length of the square blocks making up the
 	 *            format (sma)
 	 * @return Image holding encoded data
+	 * @throws QCError 
 	 */
-	public static Image DataEncode(byte[] in, int blockSize) {
-		//default palate
-		Color[] palatte = new Color[16];
-		palatte[0] = Color.BLACK;
+	public static Image DataEncode(byte[] in, int blockSize, Color[] palette) throws QCError {
+		
+		/*palatte[0] = Color.BLACK;
 		palatte[1] = Color.WHITE;
 		palatte[2] = Color.CYAN;
 		palatte[3] = Color.GREEN;
 		palatte[4] = Color.LIGHT_GRAY;
 		palatte[5] = Color.MAGENTA;
 		palatte[6] = Color.ORANGE;
-		palatte[7] = Color.RED;
-		palatte[8] = Color.BLUE;
-
+		palatte[7] = Color.RED;*/
+		
+		int pallateBits = 0;
+		for(int i=palette.length;i>1;i/=2)pallateBits++;
+		int lcm = (8 * pallateBits)/gcd(pallateBits,8);
+		if(1<<pallateBits != palette.length)throw new QCError("Pallate length not power of two");
+		
 		//get where the header ends and data begins
-		int dataoffbits = 3 * (8 + 1) + 32 + 32;
-		if (dataoffbits % (8 * 3) != 0)
-			dataoffbits += 24 - (dataoffbits % (8 * 3)); //must be multiple of 8 and palatebits
+		int dataoffbits = pallateBits * (palette.length + 1) + 32 + 32;
+		if (dataoffbits % lcm != 0)
+			dataoffbits += lcm - (dataoffbits % lcm); //must be multiple of 8 and palatebits
 		int dataoffbyte = dataoffbits / 8;
+		System.out.println(dataoffbits);
 
 		//header + data
 		byte[] put = new byte[dataoffbyte + in.length];
 
 		//get number of blocks to display
-		int truelen = (put.length * 8) / 3;
-		if ((put.length * 8) % 3 != 0)
+		int truelen = (put.length * 8) / pallateBits;
+		if ((put.length * 8) % pallateBits != 0)
 			truelen++;
 
-		for (int x = 0; x <= 8; x++) ///encoding pallet
-			BinaryEncoder.setBits(put, 3 * x, 3, x % 8);
+		for (int x = 0; x <= palette.length; x++) ///encoding palette
+			BinaryEncoder.setBits(put, pallateBits * x, pallateBits, x % palette.length);
 
 		///magic number
-		BinaryEncoder.setBits(put, 3 * (8 + 1), 32, 1234567890);
+		BinaryEncoder.setBits(put, pallateBits * (palette.length + 1), 32, 1234567890);
 
 		///length
-		BinaryEncoder.setBits(put, 3 * (8 + 1) + 32, 32, in.length);
+		BinaryEncoder.setBits(put, pallateBits * (palette.length + 1) + 32, 32, in.length);
 
 		//rest of the data
 		System.arraycopy(in, 0, put, dataoffbyte, in.length);
@@ -135,11 +140,11 @@ public class ImageEncoder {
 		//determine best width and height
 		int width = blockSize, height = 1;
 
-		while ((width / blockSize) * (height / blockSize) < truelen + 8) {
+		while ((width / blockSize) * (height / blockSize) < truelen + palette.length) {
 			if (height > width * 1.1)
 				width += blockSize;
 			else
-				height++;
+				height += blockSize;
 		}
 
 		int bwidth = width / blockSize; //width in blocks
@@ -149,25 +154,48 @@ public class ImageEncoder {
 
 		//convert put to out by using blocks and the palate
 		for (int i = 0; i < truelen; i++) {
-			int val = (int) BinaryEncoder.getBits(put, i * 3, i * 3 + 3 < put.length * 8 ? 3 : put.length * 8 - i * 3);
-			int rgb = palatte[val].getRGB();
+			
+			int val = (int) BinaryEncoder.getBits(put, i * pallateBits, i * pallateBits + pallateBits < put.length * 8 
+					? pallateBits : put.length * 8 - i * pallateBits);
+			
+			int rgb = palette[val].getRGB();
 
+			//create block
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
 					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, rgb);
 		}
 
-		//fill an additional 8 with palatte
-		for (int i = truelen; i < truelen + 8; i++)
+		//add extra palette for identification
+		for (int i = truelen; i < truelen + palette.length; i++)
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palatte[i - truelen].getRGB());
+					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palette[i - truelen].getRGB());
 		
-		//fill the end with palatte[0]
-		for (int i = truelen + 8; i < (width / blockSize) * (height / blockSize); i++)
+		//fill the end with palette[0]
+		for (int i = truelen + palette.length; i < (width / blockSize) * (height / blockSize); i++)
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palatte[0].getRGB());
+					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palette[0].getRGB());
+		
+		return out;
+	}
+
+	public static Color[] spacedPallate(int bits) {
+		Color[] out = new Color[1<<bits];
+		int option = (int) Math.ceil(Math.pow(out.length,1.0/3));
+		
+		for(int x=0;x<out.length;x++)
+		{
+			int y = x;
+			double r = (y%option)/(double)(option-1);
+			y /= option;
+			double g = (y%option)/(double)(option-1);
+			y /= option;
+			double b = (y%option)/(double)(option-1);
+			
+			out[x] = new Color((int)(255*r),(int)(255*g),(int)(255*b));
+		}
 		
 		return out;
 	}
@@ -211,7 +239,7 @@ public class ImageEncoder {
 	}
 
 	/**
-	 * Attept to build palate using given blockSize
+	 * Attempt to build palate using given blockSize
 	 * 
 	 * @param buffimg
 	 *            image to read from
@@ -226,12 +254,12 @@ public class ImageEncoder {
 	 * @return retrieved palate
 	 * @return null if could not get a valid palate
 	 */
-	private static Color[] tryPal(BufferedImage buffimg, int palatteSize, int blockSize, int width, int height) {
+	private static Color[] tryPal(BufferedImage buffimg, int maxPalatteSize, int blockSize, int width, int height) {
 		int bwidth = width / blockSize;
 
-		Color[] palatte = new Color[palatteSize];
+		Color[] palatte = new Color[maxPalatteSize];
 
-		for (int i = 0; i < palatteSize; i++) {
+		for (int i = 0; i < maxPalatteSize; i++) {
 			int x = (i % bwidth) * blockSize + blockSize / 2;
 			int y = (i / bwidth) * blockSize + blockSize / 2;
 
@@ -239,6 +267,14 @@ public class ImageEncoder {
 				return null;
 
 			palatte[i] = new Color(buffimg.getRGB(x, y));
+			
+			if(i>0&&colorDist(palatte[i],palatte[0])<1) //end palatte
+			{
+				Color[] old = palatte;
+				palatte = new Color[i];
+				System.arraycopy(old, 0, palatte, 0, i);
+				break;
+			}
 		}
 
 		return palatte;
@@ -262,13 +298,17 @@ public class ImageEncoder {
 	 * @return null if it could not be retrieved
 	 */
 	private static byte[] tryHeader(BufferedImage buffimg, Color[] palatte, int blockSize, int width, int height) {
+		
+		int palatteBits = 0;
+		for(int i=palatte.length;i>1;i/=2)palatteBits++;
+		
 		int bwidth = width / blockSize;
 
 		int headerbitsize = 32 + 32;
 		byte[] header = new byte[headerbitsize / 8 + 1];
-
+		
 		for (int i = palatte.length + 1; i < palatte.length + 1
-				+ (headerbitsize / 3 + (headerbitsize % 3 == 0 ? 0 : 1)); i++) {
+				+ (headerbitsize / palatteBits + (headerbitsize % palatteBits == 0 ? 0 : 1)); i++) {
 			int x = (i % bwidth) * blockSize + blockSize / 2;
 			int y = (i / bwidth) * blockSize + blockSize / 2;
 
@@ -277,11 +317,28 @@ public class ImageEncoder {
 
 			//get closest color in palate to this spot
 			int val = roundToPallet(new Color(buffimg.getRGB(x, y)), palatte);
-			BinaryEncoder.setBits(header, (i - (palatte.length + 1)) * 3, 3, val);
+			BinaryEncoder.setBits(header, (i - (palatte.length + 1)) * palatteBits, palatteBits, val);
 		}
 
 		return header;
 	}
+	
+	// Recursive method to return gcd of a and b 
+    static int gcd(int a, int b) 
+    { 
+        // Everything divides 0  
+        if (a == 0 || b == 0) 
+           return 0; 
+       
+        // base case 
+        if (a == b) 
+            return a; 
+       
+        // a is greater 
+        if (a > b) 
+            return gcd(a-b, b); 
+        return gcd(a, b-a); 
+    } 
 
 	/**
 	 * Decode Image that contains encoded information by DataEncode()
@@ -299,7 +356,7 @@ public class ImageEncoder {
 		while (blockSize % 2 == 0)
 			blockSize /= 2;
 
-		int palatteSize = 8;
+		int maxPalatteSize = 256;
 
 		BufferedImage buffimg = toBufferedImage(in); //readable input
 
@@ -309,8 +366,8 @@ public class ImageEncoder {
 		int bestBlockSize = 0;
 
 		for (; tryBlockSize < width / 2 && tryBlockSize < height && tryBlockSize < 150; tryBlockSize++) {
-			Color[] testPal = tryPal(buffimg, palatteSize, tryBlockSize, width, height);
-			if (testPal == null || testPal.length != palatteSize)
+			Color[] testPal = tryPal(buffimg, maxPalatteSize, tryBlockSize, width, height);
+			if (testPal == null || testPal.length < 2)
 				continue;
 
 			byte[] testHead = tryHeader(buffimg, testPal, tryBlockSize, width, height);
@@ -339,7 +396,7 @@ public class ImageEncoder {
 				}
 			}
 		}
-
+		
 		if (bestBlockSize == 0)
 			return null; //no candidate block sizes found
 		blockSize = bestBlockSize;
@@ -347,10 +404,14 @@ public class ImageEncoder {
 		int bwidth = width / blockSize; //width in blocks
 
 		//get palate
-		Color[] palatte = tryPal(buffimg, palatteSize, blockSize, width, height);
+		Color[] palatte = tryPal(buffimg, maxPalatteSize, blockSize, width, height);
 		if (palatte == null)
 			return null;
 
+		int palatteBits = 0;
+		for(int i=palatte.length;i>1;i/=2)palatteBits++;
+		int lcm = (8*palatteBits)/gcd(8,palatteBits);
+		
 		//get header
 		byte[] header = tryHeader(buffimg, palatte, blockSize, width, height);
 		if (header == null)
@@ -363,11 +424,13 @@ public class ImageEncoder {
 		long len = BinaryEncoder.getBits(header, 32, 32);
 		if (len > 1073741824)
 			return null;
-
+		
 		//find where header ends and data starts
-		int dataoffbits = 3 * (palatteSize + 1) + 32 + 32;
-		if (dataoffbits % (8 * 3) != 0)
-			dataoffbits += 24 - (dataoffbits % (8 * 3));
+		int dataoffbits = palatteBits * (palatte.length + 1) + 32 + 32;
+		if (dataoffbits % lcm != 0)
+			dataoffbits += lcm - (dataoffbits % lcm);
+		
+		System.out.println(dataoffbits);
 
 		//output
 		byte[] out = new byte[(int) len];
@@ -375,16 +438,16 @@ public class ImageEncoder {
 		//get remaining output
 		int bitidx;
 		int bitlen = out.length * 8;
-		for (int i = dataoffbits / 3; (bitidx = i * 3 - dataoffbits) < bitlen; i++) {
+		for (int i = dataoffbits / palatteBits; (bitidx = i * palatteBits - dataoffbits) < bitlen; i++) {
 			int x = (i % bwidth) * blockSize + blockSize / 2;
 			int y = (i / bwidth) * blockSize + blockSize / 2;
 
 			if (x >= width || y >= height)
-				return null; //image not large enough for expected ouput
+				return null; //image not large enough for expected output
 
 			//find nearest color in palate for bits
 			int val = roundToPallet(new Color(buffimg.getRGB(x, y)), palatte);
-			BinaryEncoder.setBits(out, bitidx, bitidx + 3 < bitlen ? 3 : bitlen - bitidx, val);
+			BinaryEncoder.setBits(out, bitidx, bitidx + palatteBits < bitlen ? palatteBits : bitlen - bitidx, val);
 		}
 
 		return out;

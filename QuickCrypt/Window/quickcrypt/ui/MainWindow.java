@@ -417,5 +417,14 @@ public class MainWindow {
 		});
 		chckbxDoNotAttempt.setBounds(296, 163, 176, 23);
 		panel.add(chckbxDoNotAttempt);
+		
+		JButton btnBinaryEncoderSettings = new JButton("Image Settings");
+		btnBinaryEncoderSettings.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				
+			}
+		});
+		btnBinaryEncoderSettings.setBounds(249, 77, 138, 23);
+		panel.add(btnBinaryEncoderSettings);
 	}
 }
