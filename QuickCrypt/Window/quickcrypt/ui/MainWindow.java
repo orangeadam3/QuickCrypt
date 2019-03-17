@@ -17,12 +17,9 @@ import javax.swing.DefaultComboBoxModel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.awt.Button;
-import javax.swing.JTextPane;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -34,18 +31,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.awt.event.ItemEvent;
-import javax.swing.JEditorPane;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import java.awt.Scrollbar;
 
 public class MainWindow {
 
 	public String settingsFile = "Quick Crypt Settings.ini";
 	public boolean saveOnExit = true;
 
-	private JFrame frame;
+	private JFrame frmQuickCrypt;
 	
 	private Context context;
 	private SharedSecrets sharedsecrets;
@@ -68,7 +62,7 @@ public class MainWindow {
 			public void run() {
 				try {
 					MainWindow window = new MainWindow();
-					window.frame.setVisible(true);
+					window.frmQuickCrypt.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -126,11 +120,12 @@ public class MainWindow {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 498, 508);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frmQuickCrypt = new JFrame();
+		frmQuickCrypt.setTitle("Quick Crypt");
+		frmQuickCrypt.setBounds(100, 100, 498, 508);
+		frmQuickCrypt.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		frame.addWindowListener(new WindowAdapter() {
+		frmQuickCrypt.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
 			    try {
@@ -141,13 +136,13 @@ public class MainWindow {
 
 		
 		JPanel panel = new JPanel();
-		frame.getContentPane().add(panel, BorderLayout.CENTER);
+		frmQuickCrypt.getContentPane().add(panel, BorderLayout.CENTER);
 		
-		JComboBox comboBox = new JComboBox();
+		final JComboBox<Object> comboBox = new JComboBox<Object>();
 		comboBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				String enc = (String) ((JComboBox)e.getSource()).getSelectedItem();
+				String enc = (String) comboBox.getSelectedItem();
 				
 				for(BinaryEncoder c : encoders.values())
 					if(c.shortName().equals(enc))
@@ -168,7 +163,7 @@ public class MainWindow {
 			encodernames[x++] = e.shortName();
 		panel.setLayout(null);
 			
-		comboBox.setModel(new DefaultComboBoxModel(encodernames));
+		comboBox.setModel(new DefaultComboBoxModel<Object>(encodernames));
 		try {
 			comboBox.setSelectedItem(context.getBinaryEncoder((context.getEncoding())).shortName());
 		} catch (QCError e2) {}
@@ -210,7 +205,7 @@ public class MainWindow {
 		lblEncrpytionMethod.setBounds(10, 21, 126, 24);
 		panel.add(lblEncrpytionMethod);
 		
-		JComboBox encryptor = new JComboBox();
+		final JComboBox<Object> encryptor = new JComboBox<Object>();
 		
 		String[] encryptornames = new String[context.getEncryptorMap().size()+1];
 		encryptornames[0] = "No Encryption";
@@ -218,10 +213,10 @@ public class MainWindow {
 		for(Encryptor e : context.getEncryptorMap().values())
 			encryptornames[x++] = e.shortName();
 		
-		encryptor.setModel(new DefaultComboBoxModel(encryptornames));
+		encryptor.setModel(new DefaultComboBoxModel<Object>(encryptornames));
 		encryptor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String enc = (String) ((JComboBox)e.getSource()).getSelectedItem();
+				String enc = (String) encryptor.getSelectedItem();
 				
 				context.lock();
 				
@@ -261,7 +256,7 @@ public class MainWindow {
 					JOptionPane.showMessageDialog(null, "No encryption, all messages sent with this mode can be decoded by anyone", "No Encryption", JOptionPane.INFORMATION_MESSAGE);
 				else
 				{
-					encryptorsettings.get(enc).start(frame);
+					encryptorsettings.get(enc).start(frmQuickCrypt);
 				}
 			}
 		});
@@ -421,7 +416,7 @@ public class MainWindow {
 		JButton btnBinaryEncoderSettings = new JButton("Image Settings");
 		btnBinaryEncoderSettings.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				
+				new ImageSettings(frmQuickCrypt,context);
 			}
 		});
 		btnBinaryEncoderSettings.setBounds(249, 77, 138, 23);

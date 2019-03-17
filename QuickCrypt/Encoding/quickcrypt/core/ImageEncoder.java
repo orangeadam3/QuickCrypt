@@ -115,7 +115,6 @@ public class ImageEncoder {
 		if (dataoffbits % lcm != 0)
 			dataoffbits += lcm - (dataoffbits % lcm); //must be multiple of 8 and palatebits
 		int dataoffbyte = dataoffbits / 8;
-		System.out.println(dataoffbits);
 
 		//header + data
 		byte[] put = new byte[dataoffbyte + in.length];
@@ -138,7 +137,7 @@ public class ImageEncoder {
 		System.arraycopy(in, 0, put, dataoffbyte, in.length);
 
 		//determine best width and height
-		int width = blockSize, height = 1;
+		int width = blockSize, height = blockSize;
 
 		while ((width / blockSize) * (height / blockSize) < truelen + palette.length) {
 			if (height > width * 1.1)
@@ -268,7 +267,7 @@ public class ImageEncoder {
 
 			palatte[i] = new Color(buffimg.getRGB(x, y));
 			
-			if(i>0&&colorDist(palatte[i],palatte[0])<1) //end palatte
+			if(i>0&&colorDist(palatte[i],palatte[0])<5) //end palatte
 			{
 				Color[] old = palatte;
 				palatte = new Color[i];
@@ -429,8 +428,6 @@ public class ImageEncoder {
 		int dataoffbits = palatteBits * (palatte.length + 1) + 32 + 32;
 		if (dataoffbits % lcm != 0)
 			dataoffbits += lcm - (dataoffbits % lcm);
-		
-		System.out.println(dataoffbits);
 
 		//output
 		byte[] out = new byte[(int) len];

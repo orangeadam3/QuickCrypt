@@ -4,7 +4,6 @@ import javax.swing.JFrame;
 
 import quickcrypt.core.Base64URL;
 import quickcrypt.core.Context;
-import quickcrypt.core.Hexadecimal;
 import quickcrypt.core.QCError;
 import quickcrypt.core.Secret;
 import quickcrypt.core.SharedSecrets;
@@ -12,9 +11,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import com.jgoodies.forms.factories.DefaultComponentFactory;
 import javax.swing.JComboBox;
-import javax.swing.JPopupMenu;
 import javax.swing.JButton;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -23,11 +20,9 @@ import javax.swing.JTextPane;
 import java.awt.Font;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 
 import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ItemListener;
-import java.io.IOException;
 import java.awt.event.ItemEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -40,7 +35,7 @@ public class SharedSecretSettings extends EncryptorSettings{
 	private JTextField textField;
 	private Context context;
 	
-	private JComboBox comboBox;
+	private JComboBox<Object> comboBox;
 	
 	/**
 	 * Create the application.
@@ -63,13 +58,14 @@ public class SharedSecretSettings extends EncryptorSettings{
 	 */
 	public void start(JFrame parent) {
 		frame = new JDialog(parent,true);
+		frame.setTitle("Shared Secrets Settings");
 		frame.setBounds(100, 100, 450, 300);
 		frame.getContentPane().setLayout(null);
 		
-		comboBox = new JComboBox();
+		comboBox = new JComboBox<Object>();
 		comboBox.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				String lab = (String) ((JComboBox)e.getSource()).getSelectedItem();
+				String lab = (String) comboBox.getSelectedItem();
 				context.lock();
 				try {
 					ss.selectSecret(lab);
@@ -266,8 +262,8 @@ public class SharedSecretSettings extends EncryptorSettings{
 		btnAddWithRandom.setBounds(173, 228, 152, 23);
 		frame.getContentPane().add(btnAddWithRandom);
 		
-		JComboBox Algo = new JComboBox();
-		Algo.setModel(new DefaultComboBoxModel(new String[] {"AES-128", "AES-256"}));
+		JComboBox<Object> Algo = new JComboBox<Object>();
+		Algo.setModel(new DefaultComboBoxModel<Object>(new String[] {"AES-128", "AES-256"}));
 		if(ss.getSymetricAlgorithmCode().equals("AS5"))Algo.setSelectedItem("AES-256");
 		else Algo.setSelectedItem("AES-128");
 		
@@ -293,7 +289,7 @@ public class SharedSecretSettings extends EncryptorSettings{
 	
 	public void refreshLabels()
 	{
-		comboBox.setModel(new DefaultComboBoxModel(ss.getLabels().toArray(new String[0])));
+		comboBox.setModel(new DefaultComboBoxModel<Object>(ss.getLabels().toArray(new String[0])));
 		comboBox.setSelectedItem(ss.getSelectedSecret().getLabel());
 	}
 

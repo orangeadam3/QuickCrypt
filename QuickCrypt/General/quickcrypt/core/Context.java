@@ -15,6 +15,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.DataFormatException;
 
+import javax.imageio.ImageIO;
+
 /**
  * Context for Quick Crypt data processing operations. A master context is
  * needed in order to control how things are encrypted. A child context can be
@@ -50,6 +52,8 @@ public class Context {
 
 	public int imageEncodingBlockSize = 1;
 	public int paletteBits = 3;
+	
+	private String imageFormat = "PNG";
 
 	/**
 	 * Creates a context with default values, to be used as a master context
@@ -243,6 +247,21 @@ public class Context {
 		encryption = enc;
 	}
 
+	/** 
+	 * Change image format if valid
+	 * 
+	 * @param f informal name of format (PNG, JPG, BMP)
+	 * @return if change was success
+	 */
+	public boolean setImageFormat(String f)
+	{
+		if( ImageIO.getImageReadersByFormatName(f).hasNext() && ImageIO.getImageWritersByFormatName(f).hasNext() )
+			imageFormat = f;
+		
+		else return false;
+		return true;
+	}
+	
 	/**
 	 * Enables a given flag
 	 * 
@@ -606,7 +625,7 @@ public class Context {
 		flags1 |= 2; //tell context we are encoding an image
 
 		//convert image to bytes than encode like anything else
-		return frontHead + getInfoHeader() + encodeRawToText(ImageEncoder.ImgToBin(in, "PNG")) + backHead;
+		return frontHead + getInfoHeader() + encodeRawToText(ImageEncoder.ImgToBin(in, imageFormat)) + backHead;
 	}
 
 	/**
@@ -648,7 +667,7 @@ public class Context {
 		flags1 |= 2; //tell context we are encoding an image
 
 		byte[] head = getInfoHeader().getBytes(StandardCharsets.UTF_8); //convert ascii header to UTF_8 bytes for export
-		byte[] body = encodeRawToRaw(ImageEncoder.ImgToBin(in, "PNG")); //convert input to bytes than encode as Raw and store in body
+		byte[] body = encodeRawToRaw(ImageEncoder.ImgToBin(in, imageFormat)); //convert input to bytes than encode as Raw and store in body
 
 		//combine head and body into toenc
 		byte[] toenc = new byte[head.length + body.length];
@@ -859,6 +878,11 @@ public class Context {
 	public String getEncryptior()
 	{
 		return encryption;
+	}
+	
+	public String getImageFormat()
+	{
+		return imageFormat;
 	}
 	
 	/**
