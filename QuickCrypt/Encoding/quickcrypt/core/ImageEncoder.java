@@ -107,17 +107,17 @@ public class ImageEncoder {
 		
 		int pallateBits = 0;
 		for(int i=palette.length;i>1;i/=2)pallateBits++;
-		int lcm = (8 * pallateBits)/gcd(pallateBits,8);
 		if(1<<pallateBits != palette.length)throw new QCError("Pallate length not power of two");
 		
 		//get where the header ends and data begins
 		int dataoffbits = pallateBits * (palette.length + 1) + 32 + 32;
+		int lcm = (8 * pallateBits)/gcd(pallateBits,8);
 		if (dataoffbits % lcm != 0)
 			dataoffbits += lcm - (dataoffbits % lcm); //must be multiple of 8 and palatebits
 		int dataoffbyte = dataoffbits / 8;
 
 		//header + data
-		byte[] put = new byte[dataoffbyte + in.length];
+		byte[] put = new byte[dataoffbyte + in.length + 4];
 
 		//get number of blocks to display
 		int truelen = (put.length * 8) / pallateBits;
@@ -135,21 +135,32 @@ public class ImageEncoder {
 
 		//rest of the data
 		System.arraycopy(in, 0, put, dataoffbyte, in.length);
+		
+		BinaryEncoder.setBits(put, (dataoffbyte + in.length) * 8, 32, 987654321);
 
 		//determine best width and height
-		int width = blockSize, height = blockSize;
-
-		while ((width / blockSize) * (height / blockSize) < truelen + palette.length) {
-			if (height > width * 1.1)
-				width += blockSize;
-			else
-				height += blockSize;
+		int width = 1+(int)Math.sqrt(truelen), height = width; //default square
+		int bestDifference = Integer.MAX_VALUE;
+		
+		//range offered at w/h ratio of 1.1
+		for (int h, w = (int)Math.sqrt(truelen/1.1)+1;w<truelen;w++) {
+			
+			//calculate height
+			h = (truelen/w);
+			if(h*w<truelen) h++;
+			
+			if(w/(double)h >= 1.1) break;//too wide, stop checking
+			
+			if(h*w-truelen<bestDifference)
+			{
+				bestDifference = h*w-truelen;
+				width = w;
+				height = h;
+			}
 		}
 
-		int bwidth = width / blockSize; //width in blocks
-
 		//output
-		BufferedImage out = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage out = new BufferedImage(width*blockSize, height*blockSize, BufferedImage.TYPE_INT_ARGB);
 
 		//convert put to out by using blocks and the palate
 		for (int i = 0; i < truelen; i++) {
@@ -162,38 +173,44 @@ public class ImageEncoder {
 			//create block
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, rgb);
+					out.setRGB(x + (i % width) * blockSize, y + (i / width) * blockSize, rgb);
 		}
-
-		//add extra palette for identification
-		for (int i = truelen; i < truelen + palette.length; i++)
-			for (int x = 0; x < blockSize; x++)
-				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palette[i - truelen].getRGB());
 		
 		//fill the end with palette[0]
-		for (int i = truelen + palette.length; i < (width / blockSize) * (height / blockSize); i++)
+		for (int i = truelen; i < width * height; i++)
 			for (int x = 0; x < blockSize; x++)
 				for (int y = 0; y < blockSize; y++)
-					out.setRGB(x + (i % bwidth) * blockSize, y + (i / bwidth) * blockSize, palette[0].getRGB());
+					out.setRGB(x + (i % width) * blockSize, y + (i / width) * blockSize, palette[0].getRGB());
 		
 		return out;
 	}
 
-	public static Color[] spacedPallate(int bits) {
-		Color[] out = new Color[1<<bits];
+	/**
+	 * Generates a palatte of a specific size using spaced and diverse colors
+	 * @param len length of pallate
+	 * @return spaced pallate of size length
+	 */
+	public static Color[] spacedPallate(int len) {
+		Color[] out = new Color[len];
 		int option = (int) Math.ceil(Math.pow(out.length,1.0/3));
 		
-		for(int x=0;x<out.length;x++)
+		int v = 0, c = option*option*option-1;
+		for(int i=0;i<out.length;i++)
 		{
-			int y = x;
+			//undo v into 3 base "option" components for colors
+			int y = v;
 			double r = (y%option)/(double)(option-1);
 			y /= option;
 			double g = (y%option)/(double)(option-1);
 			y /= option;
 			double b = (y%option)/(double)(option-1);
 			
-			out[x] = new Color((int)(255*r),(int)(255*g),(int)(255*b));
+			out[i] = new Color((int)(255*r),(int)(255*g),(int)(255*b));
+			
+			//jump up and down available number line to avoid the middle as the most distinct colors are at the ends
+			v += c;
+			if(c<0) c = (-c)-1;
+			else c = 1-c;
 		}
 		
 		return out;

@@ -651,7 +651,7 @@ public class Context {
 		System.arraycopy(head, 0, toenc, 0, head.length);
 		System.arraycopy(body, 0, toenc, head.length, body.length);
 
-		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(paletteBits)); //encode toenc as Image
+		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(1<<paletteBits)); //encode toenc as Image
 	}
 
 	/**
@@ -674,7 +674,7 @@ public class Context {
 		System.arraycopy(head, 0, toenc, 0, head.length);
 		System.arraycopy(body, 0, toenc, head.length, body.length);
 
-		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(paletteBits)); //encode toenc as Image
+		return ImageEncoder.DataEncode(toenc, imageEncodingBlockSize, ImageEncoder.spacedPallate(1<<paletteBits)); //encode toenc as Image
 	}
 
 	/**
